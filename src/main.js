@@ -27,7 +27,6 @@ function calculateSimpleRevenue(purchase, _product) {
 function calculateBonusByProfit(index, total, seller) {
     // @TODO: Расчет бонуса от позиции в рейтинге
     const { profit } = seller; // Получаем прибыль из карточки продавца
-
     let bonus = 0; // Инициализируем переменную bonus
 
     if (index === 0) {
@@ -52,7 +51,7 @@ function calculateBonusByProfit(index, total, seller) {
 function analyzeSalesData(data, options) {
 
     // @TODO: Проверка входных данных
-   
+    const { calculateRevenue, calculateBonus } = options;
     if (
         !data.customers || !Array.isArray(data.customers) || data.customers.length === 0 ||
         !data.products || !Array.isArray(data.products) || data.products.length === 0 ||
@@ -61,18 +60,13 @@ function analyzeSalesData(data, options) {
     ) {
         throw new Error('Некорректные входные данные');
     }
-      const { customers, products, sellers, purchase_records } = data;
 
     // @TODO: Проверка наличия опций
-    const { calculateRevenue, calculateBonus } = options;
-
     if (!calculateRevenue || !calculateBonus) {
         throw new Error('Отсутствуют необходимые функции в опциях');
     }
 
     // @TODO: Подготовка промежуточных данных для сбора статистики
-     const sellersStats = {};
-
     const sellerStats = data.sellers.map(seller => ({
         // Заполним начальными данными
         id: seller.id,
