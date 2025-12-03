@@ -14,7 +14,7 @@ function calculateSimpleRevenue(purchase, _product) {
     // Рассчитываем выручку
     const revenue = sale_price * quantity * discountCoefficient;
 
-    return revenue;
+    return Math.round(revenue * 100) / 100;                         // ИСПРАВЛЕНО     Округляем выручку до 2 знаков после запятой
 }
 
 /**
@@ -26,8 +26,8 @@ function calculateSimpleRevenue(purchase, _product) {
  */
 function calculateBonusByProfit(index, total, seller) {
     // @TODO: Расчет бонуса от позиции в рейтинге
-    const { profit } = seller; // Получаем прибыль из карточки продавца
-    let bonus = 0; // Инициализируем переменную bonus
+    const { profit } = seller;                                           // Получаем прибыль из карточки продавца
+    let bonus = 0;                                       // Инициализируем переменную bonus
 
     if (index === 0) {
         bonus = profit * 0.15;
@@ -38,7 +38,7 @@ function calculateBonusByProfit(index, total, seller) {
     } else { // Для всех остальных
         bonus = profit * 0.05;
     }
-    return bonus;
+    return Math.round(bonus * 100) / 100;                                // ИСПРАВЛЕНО     Округляем бонус до 2 знаков после запятой  
 }
 
 
@@ -68,7 +68,7 @@ function analyzeSalesData(data, options) {
 
     // @TODO: Подготовка промежуточных данных для сбора статистики
     const sellerStats = data.sellers.map(seller => ({
-        // Заполним начальными данными
+                                                       // Заполним начальными данными
         id: seller.id,
         name: `${seller.first_name} ${seller.last_name}`,
         revenue: 0,
@@ -78,13 +78,13 @@ function analyzeSalesData(data, options) {
     }));
 
     // @TODO: Индексация продавцов и товаров для быстрого доступа
-    // Индекс продавцов: ключом является id продавца
+                                                       // Индекс продавцов: ключом является id продавца
     const sellerIndex = data.sellers.reduce((result, seller) => ({
         ...result,
         [seller.id]: seller
     }), {});
 
-    // Индекс товаров: ключом является sku товара
+                                                            // Индекс товаров: ключом является sku товара
     const productIndex = data.products.reduce((result, product) => ({
         ...result,
         [product.sku]: product
@@ -92,40 +92,40 @@ function analyzeSalesData(data, options) {
 
     // @TODO: Расчет выручки и прибыли для каждого продавца
     data.purchase_records.forEach(record => { // Чек
-        const seller = sellerIndex[record.seller_id]; // Продавец
+        const seller = sellerIndex[record.seller_id];                  // Продавец
 
         if (!seller) {
             console.warn(`Seller with id ${record.seller_id} not found.`);
-            return; // Пропускаем эту запись, если продавец не найден
+            return;                                                          // Пропускаем эту запись, если продавец не найден
         }
 
-        // Увеличить количество продаж
+                                                                           // Увеличить количество продаж
         seller.sales_count = (seller.sales_count || 0) + 1;
 
-        // Увеличить общую сумму всех продаж (выручку) и общую прибыль
+                                                                            // Увеличить общую сумму всех продаж (выручку) и общую прибыль
         record.items.forEach(item => {
             const product = productIndex[item.sku]; // Товар
 
             if (!product) {
                 console.warn(`Product with SKU ${item.sku} not found.`);
-                return; // Пропускаем этот товар, если не найден
+                return;                                                    // Пропускаем этот товар, если не найден
             }
 
-            // Рассчитываем выручку и прибыль для данного товара
+                                           // Рассчитываем выручку и прибыль для данного товара
             const revenue = calculateRevenue(item, product);
             const cost = item.quantity * product.purchase_price;
             const profit = revenue - cost;
 
-            // Обновляем информацию о товарах продавца
+                                               // Обновляем информацию о товарах продавца
             seller.products_sold = seller.products_sold || {};
             seller.products_sold[item.sku] = {
                 name: product.name,
-                quantity: item.quantity,
+                quantity: (seller.products_sold[item.sku]?.quantity || 0) + item.quantity,         // ИСПРАВЛЕНО     Количество товаров в чеке за продажу 
                 revenue: revenue,
                 profit: profit
             };
 
-            // Увеличиваем общую выручку и прибыль продавца
+                                              // Увеличиваем общую выручку и прибыль продавца
             seller.revenue = (seller.revenue || 0) + revenue;
             seller.profit = (seller.profit || 0) + profit;
         });
@@ -134,7 +134,7 @@ function analyzeSalesData(data, options) {
     // @TODO: Сортировка продавцов по прибыли
     const sellersArray = Object.values(sellerIndex);
 
-    // Сортируем массив продавцов по убыванию прибыли (от большего к меньшему)
+                                                 // Сортируем массив продавцов по убыванию прибыли (от большего к меньшему)
     sellersArray.sort((a, b) => (b.profit || 0) - (a.profit || 0));
 
     // @TODO: Назначение премий на основе ранжирования
@@ -150,7 +150,7 @@ function analyzeSalesData(data, options) {
         // Получаем топ-10 проданных товаров продавца
         const topProducts = Object.entries(seller.products_sold || {}) // Получаем [sku, {name, quantity, revenue, profit}]
             .sort(([, a], [, b]) => b.quantity - a.quantity) // Сортируем по убыванию количества
-            .slice(0, 10) // Берем только первые 10
+            .slice(0, 10)         // Берем только первые 10
             .map(([sku, product]) => ({ sku: sku, quantity: product.quantity }));  // Преобразуем в нужный формат
 
         return {
@@ -165,4 +165,5 @@ function analyzeSalesData(data, options) {
     });
 
       return report;
+      
 }
