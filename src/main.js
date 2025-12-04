@@ -6,6 +6,7 @@
  */
 function calculateSimpleRevenue(purchase, _product) {
     const { discount, sale_price, quantity } = purchase;
+
     const discountDecimal = discount / 100;
     const fullPrice = sale_price * quantity;
     const revenue = fullPrice * (1 - discountDecimal);
@@ -91,8 +92,10 @@ function analyzeSalesData(data, options) {
         const seller = sellerIndex[record.seller_id];
         if (!seller) return;
 
-        seller.sales_count++; // 
+        seller.sales_count ++; // 
 
+          seller.revenue += record.total_amount;
+        
         record.items.forEach(item => {
             const product = productIndex[item.sku];
             if (!product) return;
@@ -101,7 +104,7 @@ function analyzeSalesData(data, options) {
             const revenue = calculateRevenue(item, product);
             const profit = revenue - cost;
 
-            seller.revenue += revenue;
+            // seller.revenue += revenue;        удалено, так как выручка считается на основе total_amount
             seller.profit += profit;
 
             if (!seller.products_sold[item.sku]) {
@@ -114,15 +117,10 @@ function analyzeSalesData(data, options) {
     // Сортировка по прибыли
     sellerStats.sort((a, b) => b.profit - a.profit);
 
-    // Для отладки (удалить после завершения)
-    console.log('После сортировки:', sellerStats.map(s => ({
-        name: s.name,
-        profit: s.profit
-    })));
 
-    // Назначение бонусов и топ-10 товаров
+   // Назначение бонусов и топ-10 товаров
     sellerStats.forEach((seller, index) => {
-        seller.bonus = calculateBonus(index, sellerStats.length, seller); //  ;
+        seller.bonus = calculateBonus(index, sellerStats.length, seller); 
 
         seller.top_products = Object.entries(seller.products_sold)
             .map(([sku, quantity]) => ({ sku, quantity }))
